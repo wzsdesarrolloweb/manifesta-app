@@ -1,0 +1,36 @@
+services:
+  # ── Backend (NestJS) ──────────────────────────────────────────────────────
+  - type: web
+    name: manifestacion-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: node dist/main
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: OPENAI_API_KEY
+        sync: false                    # se carga manualmente en el dashboard
+      - key: FRONTEND_URL
+        fromService:
+          type: web
+          name: manifestacion-frontend
+          property: url
+
+  # ── Frontend (Vite / Static Site) ─────────────────────────────────────────
+  - type: web
+    name: manifestacion-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: manifestacion-backend
+          property: url
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html     # necesario para que React funcione sin 404 en refresh
